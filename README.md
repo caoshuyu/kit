@@ -55,6 +55,16 @@ uuid
 |NewV4|-|UUID|随机生成的UUID|
 |NewV5|ns UUID, name string|基于命名空间UUID和名称的SHA-1散列|
 
+inttools
+---
+|函数|入参数|返回值|方法说明|
+|---|---|---|---|
+|Int64ArrToString|data []int64, split string|string|数字数组转字符串;input [3306,4450,3,12],-;out 3306-4450-3-12|
+|StringToInt64Arr|data string, split string|[]int64|字符串分割为数字数组;input 3306-4450-3-12,-;out [3306,4450,3,12]|
+|GetPageNum|page int64, pageContext int64|newPage int64, newPageContext int64, startLine int64|通过页码和每页数量计算起始行数|
+|Intersect|arr1 []int64, arr2 []int64|[]int64|Intersect 取两个数组交集|
+
+
 stringtools
 ---
 
@@ -192,5 +202,124 @@ etcdclient
 ```
 
 
+exceltools
+---
+
+|函数|入参数|返回值|方法说明|
+|---|---|---|---|
+|SaveExcel|filename string, data []*Sheet|error|存储excel|
+|GetExcel|filename string|data []*Sheet, err error|读取excel|
+|GetXls|filename string, charset string|data []*Sheet, err error|读取xls|
+
+httptools
+---
+
+|函数|入参数|返回值|方法说明|
+|---|---|---|---|
+
+
+
+redistools
+---
+
+|函数|入参数|返回值|方法说明|
+|---|---|---|---|
+
+
+
+mysqltools
+---
+
+|函数|入参数|返回值|方法说明|
+|---|---|---|---|
+|Connect|*MysqlClient|error|链接mysql服务|
+|CheckMonitor|*MysqlClient|error|检测链接有效性|
+
++ 单数据库使用
+```go
+	//get one db conf
+	dbJson := "{\"db_dsn\":\"root:root@tcp(127.0.0.1:3306)/api_platform?clientFoundRows=false&parseTime=true&loc=Asia%2FShanghai&timeout=5s&collation=utf8mb4_bin&interpolateParams=true\",\"max_open\":100,\"max_idle\":100,\"db_name\":\"api_platform\"}"
+	mysqlDbConf := mysqltools.MySqlConf{}
+	err := json.Unmarshal([]byte(dbJson), &mysqlDbConf)
+	if nil != err {
+		panic(err)
+	}
+
+	var MasterDb *sql.DB
+
+	//connect db
+	mysqlClient := mysqltools.MysqlClient{
+		Conf: &mysqlDbConf,
+	}
+	err = mysqlClient.Connect()
+	if nil != err {
+		panic(err)
+	}
+	MasterDb = mysqlClient.Client
+	//check db connect
+	go func(mysqlClient mysqltools.MysqlClient) {
+		//5 second check once
+		time.Sleep(time.Second * time.Duration(5))
+		err := mysqlClient.CheckMonitor()
+		if nil != err {
+			//Try to reconnect
+			for i := 0; i <= 3; i++ {
+				err := mysqlClient.Connect()
+				if nil != err {
+					time.Sleep(time.Second * time.Duration(i*3+1))
+				} else {
+					MasterDb = mysqlClient.Client
+					break
+				}
+			}
+			err := MasterDb.Ping()
+			if nil != err {
+				panic(err)
+			}
+		}
+	}(mysqlClient)
+```
+
++ 一主多从数据库使用
+```go
+	//get more db conf
+	dbJson := "{\"master\":{\"db_dsn\":\"root:root@tcp(127.0.0.1:3306)/api_platform?clientFoundRows=false&parseTime=true&loc=Asia%2FShanghai&timeout=5s&collation=utf8mb4_bin&interpolateParams=true\",\"max_open\":100,\"max_idle\":100,\"db_name\":\"api_platform\"},\"slave\":{\"db_dsn\":\"root:root@tcp(127.0.0.1:3306)/api_platform?clientFoundRows=false&parseTime=true&loc=Asia%2FShanghai&timeout=5s&collation=utf8mb4_bin&interpolateParams=true\",\"max_open\":100,\"max_idle\":100,\"db_name\":\"api_platform\"}}"
+	type DbStruct struct {
+		Master mysqltools.MySqlConf `json:"master"`
+		Slave  mysqltools.MySqlConf `json:"slave"`
+	}
+
+	mysqlDbConf := DbStruct{}
+	err := json.Unmarshal([]byte(dbJson), &mysqlDbConf)
+	if nil != err {
+		panic(err)
+	}
+
+	var MasterDb *sql.DB
+	var SlaveDb *sql.DB
+
+	//connect db
+	var MasterDbClient = connectDb(mysqlDbConf.Master)
+	var SlaveDbClient = connectDb(mysqlDbConf.Slave)
+
+	MasterDb = MasterDbClient.Client
+	SlaveDb = SlaveDbClient.Client
+
+	//check db
+
+```
+
+```go
+func connectDb(mysqlDbConf mysqltools.MySqlConf) (mysqlClient *mysqltools.MysqlClient) {
+	mysqlClient = &mysqltools.MysqlClient{
+		Conf: &mysqlDbConf,
+	}
+	err := mysqlClient.Connect()
+	if nil != err {
+		panic(err)
+	}
+	return mysqlClient
+}
+```
 
 
