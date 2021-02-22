@@ -216,16 +216,83 @@ httptools
 
 |函数|入参数|返回值|方法说明|
 |---|---|---|---|
+|HTTPRequest|*ExternalHttpRequest|*ExternalHttpResponse,error|发起http请求|
 
++ ExternalHttpRequest
+```go
+type ExternalHttpRequest struct {
+	Jar          *cookiejar.Jar
+	Method       string
+	Header       map[string]string
+	TimeOut      int
+	Domain       string
+	Uri          string
+	Body         string
+	ReqUriParams string
+}
+```
+    + Jar 需要多次请求使用同一个cookie的情况下使用
+    
++ ExternalHttpResponse
+```go
+type ExternalHttpResponse struct {
+	StatusCode int
+	Header     map[string][]string
+	Body       []byte
+	UseTime    int64
+}
+```
 
++ 使用方法
+```go
+	jar, _ := cookiejar.New(nil)
+	header := make(map[string]string)
+	request := &httptools.ExternalHttpRequest{
+		Jar:          jar,
+		Method:       http.MethodPost,            //请求类型
+		Header:       header,                     //请求头
+		TimeOut:      6,                          //超时时间
+		Domain:       "http://127.0.0.1:3000",    //请求domain
+		Uri:          "/test",                    //请求uri
+		Body:         "{\"body_info\":\"json\"}", //请求体
+		ReqUriParams: "a=b",                      //用于在url上添加信息，http://127.0.0.1:3000/test?a=b
+	}
+	response, err := httptools.HTTPRequest(request)
+	if nil != err {
+		fmt.Println(err)
+	}
+```
 
 redistools
 ---
 
 |函数|入参数|返回值|方法说明|
 |---|---|---|---|
+|ConnRedis|*RedisClient|error|链接Redis|
+|Lock|*RedisClient|ok bool, err error|加锁，outTime 加锁时长(秒)，ok 成功为 true|
+|UnLock|*RedisClient,key string|error|解锁|
 
++ 使用
+```go
+	rc := redistools.RedisClient{
+		Conf: &redistools.RedisConf{
+			Addr: "127.0.0.1:6379",
+		},
+	}
+	err := rc.ConnRedis()
+	if nil != err {
+		panic(err)
+	}
 
+    var ctx = context.Background()
+
+	rc.Client.SetNX(ctx,"key", "value", time.Second*time.Duration(30))
+
+	//add sync lock
+	rc.Lock(ctx,"LOCK_KEY",30)
+	//del sync lock
+	rc.UnLock(ctx,"LOCK_KEY")
+```
 
 mysqltools
 ---

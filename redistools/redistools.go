@@ -1,8 +1,9 @@
 package redistools
 
 import (
+	"context"
 	"errors"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"time"
 )
 
@@ -29,7 +30,8 @@ func (rc *RedisClient) ConnRedis() error {
 		DB:       rc.Conf.DB,
 	})
 	//check redis connect ready
-	_, err := rc.Client.Ping().Result()
+	var ctx = context.Background()
+	_, err := rc.Client.Ping(ctx).Result()
 	if nil != err {
 		return err
 	}
@@ -38,12 +40,12 @@ func (rc *RedisClient) ConnRedis() error {
 
 // Lock 加锁
 // outTime 加锁时长(秒)
-// rslt 成功为 true
-func (rc *RedisClient) Lock(key string, outTime int) (ok bool, err error) {
-	return rc.Client.SetNX(key, "lock", time.Duration(outTime)*time.Second).Result()
+// ok 成功为 true
+func (rc *RedisClient) Lock(context context.Context, key string, outTime int) (ok bool, err error) {
+	return rc.Client.SetNX(context, key, "lock", time.Duration(outTime)*time.Second).Result()
 }
 
 //Unlock 解锁
-func (rc *RedisClient) UnLock(key string) (err error) {
-	return rc.Client.Del(key).Err()
+func (rc *RedisClient) UnLock(context context.Context, key string) (err error) {
+	return rc.Client.Del(context, key).Err()
 }
