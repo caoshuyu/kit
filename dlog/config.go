@@ -9,16 +9,16 @@ const (
 )
 
 var (
-	logType                                                   = LOG_TYPE_LOCAL
-	logPath                                                   = defaultDir
-	traceInfoFunc func() (sessionId, actionId, spanId string) = traceFunc //获取用户标记信息
-	prefix        string                                                  //项目名称 类似 go_user
+	logType                                                                   = LOG_TYPE_LOCAL
+	logPath                                                                   = defaultDir
+	traceInfoFunc func() (sessionId, actionId, spanId string, colorID string) = traceFunc //获取用户标记信息
+	prefix        string                                                                  //项目名称 类似 go_user
 )
 
 type SetLogConf struct {
 	LogType       int
 	LogPath       string
-	TraceInfoFunc func() (sessionId, actionId, spanId string)
+	TraceInfoFunc func() (sessionId, actionId, spanId, colorID string)
 	Prefix        string
 }
 
@@ -41,7 +41,7 @@ func SetLog(conf SetLogConf) {
 	prefix = conf.Prefix
 }
 
-func traceFunc() (sessionId, actionId, spanId string) {
-	sessionId, actionId, spanId = gls.GetTraceInfo()
+func traceFunc() (sessionId, actionId, spanId string, colorID string) {
+	sessionId, actionId, spanId, colorID = gls.GetTraceInfo()
 	return
 }

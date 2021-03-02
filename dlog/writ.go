@@ -69,12 +69,13 @@ func marshalJSON(logArr []logVal) ([]byte, error) {
 func (p *dLog) logStr(level string, kv ...interface{}) ([]byte, error) {
 	_, file, line, _ := runtime.Caller(3)
 	file = p.getFilePath(file)
-	sessionId, actionId, spanId := traceInfoFunc()
+	sessionId, actionId, spanId, color := traceInfoFunc()
 	logValArr := make([]logVal, 0, 10)
 	logValArr = append(logValArr,
 		logVal{key: "session_id", val: sessionId},
 		logVal{key: "action_id", val: actionId},
 		logVal{key: "span_id", val: spanId},
+		logVal{key: "color", val: color},
 		logVal{key: "prefix", val: prefix},
 		logVal{key: "file", val: file},
 		logVal{key: "level", val: level},
@@ -96,5 +97,3 @@ func (p *dLog) logStr(level string, kv ...interface{}) ([]byte, error) {
 	}
 	return marshalJSON(logValArr)
 }
-
-
