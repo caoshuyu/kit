@@ -2,6 +2,7 @@ package mysqltools
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"github.com/caoshuyu/kit/dlog"
 	_ "github.com/go-sql-driver/mysql"
@@ -60,4 +61,18 @@ func (mc *MysqlClient) CheckMonitor() error {
 		dlog.INFO("_db_OpenConnections", "conn is ok", "open conn", openConn, "max open conn", mc.Conf.MaxOpen)
 	}
 	return nil
+}
+
+func WriteDbError(tableName string, err error, sql string, addParams ...interface{}) {
+	var infoList []interface{}
+	for k, _ := range addParams {
+		infoList = append(infoList, addParams[k])
+	}
+	type ErrorType struct {
+		ErrorParams []interface{}
+	}
+	paramsJson, _ := json.Marshal(ErrorType{
+		ErrorParams: infoList,
+	})
+	dlog.ERROR("msg", "dbError", "tableName", tableName, "error", err.Error(), "sql", sql, "params", string(paramsJson))
 }
