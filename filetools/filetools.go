@@ -26,6 +26,9 @@ func MakeDir(dirPath string) (err error) {
 		err = errors.New("dir path not empty")
 		return
 	}
+	if CheckFileExist(dirPath) {
+		return
+	}
 	dirPath = strings.Replace(dirPath, "\\", "/", -1)
 	pathArr := strings.Split(dirPath, "/")
 	pathLen := len(pathArr)
