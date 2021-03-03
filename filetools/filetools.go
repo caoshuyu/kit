@@ -38,10 +38,10 @@ func MakeDir(dirPath string) (err error) {
 		if CheckFileExist(nowPath) {
 			continue
 		}
-		os.Mkdir(nowPath, 0755) //系统默认文件夹权限，如果需要别的权限创建后可进行修改
-	}
-	if num > -1 {
-		_, err = os.Create(dirPath)
+		err = os.Mkdir(nowPath, 0755) //系统默认文件夹权限，如果需要别的权限创建后可进行修改
+		if nil != err {
+			return
+		}
 	}
 	return
 }
