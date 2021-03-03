@@ -32,10 +32,6 @@ func MakeDir(dirPath string) (err error) {
 	dirPath = strings.Replace(dirPath, "\\", "/", -1)
 	pathArr := strings.Split(dirPath, "/")
 	pathLen := len(pathArr)
-	num := strings.Index(dirPath, ".")
-	if num > -1 {
-		pathLen -= 1
-	}
 	for i := 1; i <= pathLen; i++ {
 		nowPath := strings.Join(pathArr[:i], "/")
 		if CheckFileExist(nowPath) {
